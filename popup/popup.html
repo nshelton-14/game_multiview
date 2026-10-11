@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Game Multiview</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <section id="session" hidden>
+    <h1>Grid is open</h1>
+    <ul id="session-list"></ul>
+    <div class="row">
+      <button id="mute-all">Mute all</button>
+      <button id="close-grid">Close grid</button>
+    </div>
+  </section>
+
+  <h1>NFL games</h1>
+  <p id="status">Loading…</p>
+  <ul id="games"></ul>
+  <label class="layout">Layout
+    <select id="layout"></select>
+  </label>
+  <p class="hint">Pick up to 4. The first game you check is the main window.</p>
+  <button id="open" disabled>Open grid</button>
+  <script src="../lib/layout.js"></script>
+  <script type="module" src="popup.js"></script>
+</body>
+</html>

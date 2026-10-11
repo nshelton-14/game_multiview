@@ -1,0 +1,19 @@
+# dependencies and build output (for when you add WXT/TypeScript later)
+node_modules/
+dist/
+.output/
+.wxt/
+
+# packaging artifacts
+*.zip
+*.crx
+*.xpi
+*.pem        # Chrome's private signing key; never commit this
+
+# local/editor/OS files
+.env
+.env.*
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

@@ -1,0 +1,58 @@
+{
+  "manifest_version": 3,
+  "name": "Game Multiview",
+  "version": "0.2.0",
+  "description": "Pick live NFL games and watch them together in one borderless YouTube TV grid, each frame with its own spoofed location.",
+  "action": { "default_popup": "popup/popup.html" },
+  "background": {
+    "service_worker": "background.js",
+    "scripts": ["background.js"]
+  },
+  "permissions": ["storage", "system.display"],
+  "host_permissions": [
+    "https://site.api.espn.com/*",
+    "https://tv.youtube.com/*"
+  ],
+  "commands": {
+    "cycle-audio": {
+      "suggested_key": { "default": "Alt+Shift+A" },
+      "description": "Switch audio to the next game"
+    },
+    "mute-all": {
+      "suggested_key": { "default": "Alt+Shift+X" },
+      "description": "Mute or restore all audio"
+    },
+    "toggle-menus": {
+      "suggested_key": { "default": "Alt+Shift+M" },
+      "description": "Show or hide the control bar"
+    },
+    "last-audio": { "description": "Switch audio to the previous game" },
+    "audio-1": { "description": "Audio from game 1" },
+    "audio-2": { "description": "Audio from game 2" },
+    "audio-3": { "description": "Audio from game 3" },
+    "audio-4": { "description": "Audio from game 4" }
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://tv.youtube.com/*"],
+      "js": ["inject/geo-main.js"],
+      "run_at": "document_start",
+      "all_frames": true,
+      "world": "MAIN"
+    },
+    {
+      "matches": ["https://tv.youtube.com/*"],
+      "js": ["inject/geo-bridge.js", "inject/guide-nav.js"],
+      "run_at": "document_start",
+      "all_frames": true
+    },
+    {
+      "matches": ["https://tv.youtube.com/*"],
+      "js": ["lib/layout.js", "inject/grid-host.js"],
+      "run_at": "document_start"
+    }
+  ],
+  "browser_specific_settings": {
+    "gecko": { "id": "game-multiview@example.com", "strict_min_version": "128.0" }
+  }
+}
