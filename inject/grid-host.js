@@ -94,6 +94,26 @@
     renderHud();
   }
 
+  // ---- per-game refresh ----
+  // A plain reload makes the page ask for its location again (the geo bridge
+  // re-fetches it from the background). `fromGuide` also clears guide-nav's
+  // once-per-slot flag and loads the guide, so the game is searched for anew.
+  function refreshFrame(i, { fromGuide = false } = {}) {
+    const { frame } = tiles[i];
+    const win = frame.contentWindow;
+    try {
+      if (fromGuide) {
+        win.sessionStorage.removeItem(`mv-nav-done:${i}`);
+        win.location.assign(FRAME_URL);
+      } else {
+        win.location.reload();
+      }
+    } catch (err) {
+      // Frame is on another origin or detached: fall back to re-setting src.
+      frame.src = FRAME_URL;
+    }
+  }
+
   // ---- layout ----
   function applyLayout() {
     const rects = L.rects(state.layout, tiles.length);
@@ -177,7 +197,12 @@
       audio.addEventListener('click', () => selectAudio(i));
       const star = el('button', { textContent: '★', title: 'Make this the main window' });
       star.addEventListener('click', () => makeMain(i));
-      return el('div', { className: 'group' }, audio, star);
+      const refresh = el('button', {
+        textContent: '↻',
+        title: 'Reload this game (Shift-click: restart from the guide and find the game again)'
+      });
+      refresh.addEventListener('click', e => refreshFrame(i, { fromGuide: e.shiftKey }));
+      return el('div', { className: 'group' }, audio, star, refresh);
     });
 
     const layout = el('select', { title: 'Layout' });
