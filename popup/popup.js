@@ -1,5 +1,5 @@
 import { fetchGames } from '../lib/espn.js';
-import { MARKETS } from '../lib/markets.js';
+import { gameToSlot } from '../lib/slot.js';
 
 const L = globalThis.MVLayout;
 const MAX_GAMES = 4;
@@ -89,15 +89,7 @@ function buildOpenRequest(chosen) {
       width: screen.availWidth,
       height: screen.availHeight
     },
-    games: chosen.map(game => {
-      // The local broadcast of a game is tied to the home team's market.
-      const market = MARKETS[game.home.abbr];
-      return {
-        label: `${game.away.nickname} @ ${game.home.nickname}`,
-        teams: [game.away.nickname, game.home.nickname],
-        geo: market ? { lat: market.lat, lng: market.lng, label: market.label } : null
-      };
-    })
+    games: chosen.map(gameToSlot)
   };
 }
 

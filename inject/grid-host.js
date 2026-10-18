@@ -36,6 +36,7 @@
     #mv-hud button, #mv-hud select { font: inherit; color: #fff; background: #333; border: 1px solid #555; border-radius: 6px; padding: 4px 8px; cursor: pointer; }
     #mv-hud button.on { background: #0a84ff; border-color: #0a84ff; }
     #mv-hud .group { display: flex; gap: 2px; }
+    #mv-hud .group select { width: 3.4em; }
     #mv-banner { position: fixed; bottom: 12px; left: 50%; transform: translateX(-50%); z-index: 2147483647;
       padding: 8px 14px; border-radius: 8px; color: #fff; background: rgba(0, 0, 0, .85); cursor: pointer; }
     #mv-banner[hidden] { display: none; }
@@ -96,14 +97,13 @@
 
   // ---- per-game refresh ----
   // A plain reload makes the page ask for its location again (the geo bridge
-  // re-fetches it from the background). `fromGuide` also clears guide-nav's
-  // once-per-slot flag and loads the guide, so the game is searched for anew.
+  // re-fetches it from the background). `fromGuide` goes back to the guide
+  // instead, so a game can be picked again after leaving it.
   function refreshFrame(i, { fromGuide = false } = {}) {
     const { frame } = tiles[i];
     const win = frame.contentWindow;
     try {
       if (fromGuide) {
-        win.sessionStorage.removeItem(`mv-nav-done:${i}`);
         win.location.assign(FRAME_URL);
       } else {
         win.location.reload();
@@ -111,6 +111,33 @@
     } catch (err) {
       // Frame is on another origin or detached: fall back to re-setting src.
       frame.src = FRAME_URL;
+    }
+  }
+
+  // ---- swap a window's game ----
+  let gameList = []; // [{id, label, text}] from the background (ESPN scoreboard)
+
+  async function loadGames() {
+    try {
+      gameList = await send({ type: 'list-games' });
+      // Don't rebuild the bar under an open drop-down.
+      if (!hud.contains(document.activeElement)) renderHud();
+    } catch (err) {
+      console.info('[Game Multiview] Could not load the game list', err);
+    }
+  }
+
+  async function swapGame(i, id) {
+    if (!id) return;
+    try {
+      const { label } = await send({ type: 'swap-game', index: i, id });
+      tiles[i].label = label;
+      renderHud();
+      // Back to the guide; the reload fetches the new game's location.
+      refreshFrame(i, { fromGuide: true });
+    } catch (err) {
+      console.error('[Game Multiview] Could not swap the game', err);
+      renderHud();
     }
   }
 
@@ -183,7 +210,8 @@
   }
   function scheduleHide() {
     clearTimeout(hudTimer);
-    if (hudPinned) return;
+    // Stay open while a drop-down is focused, or its list would close with the bar.
+    if (hudPinned || hud.contains(document.activeElement)) return;
     hudTimer = setTimeout(() => hud.classList.remove('show'), HUD_IDLE_MS);
   }
 
@@ -199,10 +227,20 @@
       star.addEventListener('click', () => makeMain(i));
       const refresh = el('button', {
         textContent: '↻',
-        title: 'Reload this game (Shift-click: restart from the guide and find the game again)'
+        title: 'Reload this game (Shift-click: go back to the guide)'
       });
       refresh.addEventListener('click', e => refreshFrame(i, { fromGuide: e.shiftKey }));
-      return el('div', { className: 'group' }, audio, star, refresh);
+
+      // Replace this window's game with another from today's list.
+      const swap = el('select', { title: 'Replace this game' });
+      swap.append(new Option('⇄', ''));
+      const inUse = new Set(tiles.map(x => x.label));
+      for (const game of gameList.filter(g => !inUse.has(g.label))) {
+        swap.append(new Option(game.text, game.id));
+      }
+      swap.addEventListener('change', () => { swapGame(i, swap.value); swap.blur(); });
+      swap.addEventListener('blur', scheduleHide);
+      return el('div', { className: 'group' }, audio, star, refresh, swap);
     });
 
     const layout = el('select', { title: 'Layout' });
@@ -311,6 +349,8 @@
     }, 1000);
 
     send({ type: 'grid-ready' }).catch(() => {});
+    loadGames();
+    setInterval(loadGames, 60000);
   }
 
   // Visible progress so a stuck start-up is distinguishable from the script not running.

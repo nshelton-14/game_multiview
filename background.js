@@ -1,8 +1,10 @@
 // Owns the multiview grid: opens one fullscreen window hosting the grid
 // (inject/grid-host.js), remembers each slot's game and spoofed location, and
 // forwards keyboard shortcuts and popup commands to the grid page.
-// Kept as a classic (non-module) script so it runs as a Chrome service worker
-// and as a Firefox background script.
+// A module, so it can share the ESPN and slot helpers with the popup. Runs as a
+// Chrome module service worker and as a Firefox module background script.
+import { fetchGames } from './lib/espn.js';
+import { gameToSlot, describeGame } from './lib/slot.js';
 
 const GRID_KEY = 'grid';
 const HOST_URL = 'https://tv.youtube.com/live#mv-grid';
@@ -133,6 +135,23 @@ async function handle(message, sender) {
       return;
     }
     case 'close-grid': return closeGrid();
+    case 'list-games':
+      return (await fetchGames()).map(game => ({
+        id: game.id,
+        label: gameToSlot(game).label,
+        text: describeGame(game)
+      }));
+    case 'swap-game': {
+      // Replace slot `index` with another game. The grid page then reloads that
+      // frame, whose geo bridge re-reads the slot, so the new location applies.
+      const index = message.index;
+      if (!Number.isInteger(index) || !grid.slots[index]) throw new Error('Unknown slot.');
+      const game = (await fetchGames()).find(g => g.id === message.id);
+      if (!game) throw new Error('That game is no longer listed.');
+      grid.slots[index] = gameToSlot(game);
+      await setGrid(grid);
+      return { label: grid.slots[index].label };
+    }
   }
   throw new Error('Unknown request.');
 }
