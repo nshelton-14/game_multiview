@@ -27,6 +27,10 @@
       "suggested_key": { "default": "Alt+Shift+M" },
       "description": "Show or hide the control bar"
     },
+    "toggle-focus": {
+      "suggested_key": { "default": "Alt+Shift+F" },
+      "description": "Show only the game with audio, or go back to the multiview"
+    },
     "last-audio": { "description": "Switch audio to the previous game" },
     "audio-1": { "description": "Audio from game 1" },
     "audio-2": { "description": "Audio from game 2" },

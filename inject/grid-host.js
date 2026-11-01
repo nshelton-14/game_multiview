@@ -45,7 +45,7 @@
 
   let slots = [];
   let order = []; // order[tile] = layout position the tile occupies
-  const state = { audio: 0, muted: false, layout: L.DEFAULT };
+  const state = { audio: 0, muted: false, layout: L.DEFAULT, focus: -1 };
   const tiles = [];
   const watchedDocs = new WeakSet();
   let hud, edge, banner, hudTimer, hudPinned = false;
@@ -91,6 +91,7 @@
   function selectAudio(i, { keepMuted = false } = {}) {
     state.audio = i;
     if (!keepMuted) state.muted = false;
+    if (state.focus >= 0) { state.focus = i; applyLayout(); } // focus follows audio
     applyAudio();
     renderHud();
   }
@@ -145,9 +146,26 @@
   function applyLayout() {
     const rects = L.rects(state.layout, tiles.length);
     tiles.forEach((t, i) => {
-      const r = rects[order[i]];
-      Object.assign(t.tile.style, { left: `${r.x}%`, top: `${r.y}%`, width: `${r.width}%`, height: `${r.height}%` });
+      // A focused tile covers the whole grid; the others keep their place
+      // underneath, so they stay mounted and keep playing.
+      const focused = i === state.focus;
+      const r = focused ? { x: 0, y: 0, width: 100, height: 100 } : rects[order[i]];
+      Object.assign(t.tile.style, {
+        left: `${r.x}%`, top: `${r.y}%`, width: `${r.width}%`, height: `${r.height}%`,
+        zIndex: focused ? '1' : ''
+      });
     });
+  }
+
+  // Temporarily show one game full-window; call again (or pass its index again) to go back.
+  function toggleFocus(i = state.audio) {
+    state.focus = state.focus === i ? -1 : i;
+    if (state.focus >= 0) {
+      selectAudio(i); // renders the bar
+    } else {
+      renderHud();
+    }
+    applyLayout();
   }
 
   function setLayout(name) {
@@ -225,6 +243,13 @@
       audio.addEventListener('click', () => selectAudio(i));
       const star = el('button', { textContent: '★', title: 'Make this the main window' });
       star.addEventListener('click', () => makeMain(i));
+      const focused = state.focus === i;
+      const zoom = el('button', {
+        textContent: focused ? '⤡' : '⤢',
+        title: focused ? 'Back to the multiview' : 'Show only this game',
+        className: focused ? 'on' : ''
+      });
+      zoom.addEventListener('click', () => toggleFocus(i));
       const refresh = el('button', {
         textContent: '↻',
         title: 'Reload this game (Shift-click: go back to the guide)'
@@ -240,7 +265,7 @@
       }
       swap.addEventListener('change', () => { swapGame(i, swap.value); swap.blur(); });
       swap.addEventListener('blur', scheduleHide);
-      return el('div', { className: 'group' }, audio, star, refresh, swap);
+      return el('div', { className: 'group' }, audio, zoom, star, refresh, swap);
     });
 
     const layout = el('select', { title: 'Layout' });
@@ -272,6 +297,7 @@
       case 'cycle-audio': selectAudio((state.audio + 1) % n); break;
       case 'last-audio': selectAudio((state.audio + n - 1) % n); break;
       case 'mute-all': state.muted = !state.muted; applyAudio(); renderHud(); break;
+      case 'toggle-focus': toggleFocus(); break;
       case 'toggle-menus':
         hudPinned = !hudPinned;
         if (hudPinned) showHud(); else scheduleHide();
