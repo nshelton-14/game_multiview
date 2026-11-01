@@ -11,11 +11,11 @@ team's market).
 Disable the standalone Spoof Geolocation extension so it doesn't interfere.
 
 ## Using it
-- Check up to 4 games in the popup (the first one checked is the main window), pick a layout, click **Open grid**.
+- Check up to 8 games in the popup (the first one checked is the main window), pick a layout, click **Open grid**.
 - Move the mouse to the very top edge of the grid to reveal the control bar: per-game audio buttons, ★ to make a game the main window, layout picker, mute all, fullscreen, close.
-- Audio: one game plays at a time. Click a game to hear it, use the control bar or popup, or use shortcuts: **Alt+Shift+A** cycle, **Alt+Shift+X** mute all, **Alt+Shift+M** pin/unpin the control bar. Extra unbound shortcuts (audio 1–4, previous) can be set at `chrome://extensions/shortcuts`.
+- Audio: one game plays at a time. Click a game to hear it, use the control bar or popup, or use shortcuts: **Alt+Shift+A** cycle, **Alt+Shift+X** mute all, **Alt+Shift+M** pin/unpin the control bar. Extra unbound shortcuts (audio 1–8, previous) can be set at `chrome://extensions/shortcuts`.
+- Custom layouts: click **✎** in the control bar, drag the windows and their handles into place (edges snap to a grid and to each other), then **Save as…**. Saved layouts appear in the layout pickers (in the control bar and the popup) marked with ★; select one and click **🗑** to delete it. **Esc** leaves edit mode without saving.
 - Chrome blocks sound until you've clicked in the page once; a "Click a game to enable sound" banner shows until then.
 
 ## Unverified / next steps
-1. Drag-to-arrange custom layouts
-2. Fix auto-selecting correct game, currently only works some of the time
+1. Fix auto-selecting correct game, currently only works some of the time

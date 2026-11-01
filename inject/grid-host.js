@@ -33,7 +33,24 @@
       z-index: 2147483647; display: flex; gap: 6px; align-items: center; padding: 8px 10px; color: #fff;
       background: rgba(0, 0, 0, .85); border-radius: 0 0 10px 10px; max-width: 96vw; flex-wrap: wrap; justify-content: center; }
     #mv-hud.show { transform: translate(-50%, 0); }
-    #mv-hud button, #mv-hud select { font: inherit; color: #fff; background: #333; border: 1px solid #555; border-radius: 6px; padding: 4px 8px; cursor: pointer; }
+    body.editing #mv-hud, body.editing #mv-edge { display: none; }
+    .mv-edit { position: absolute; inset: 1px; z-index: 5; display: flex; align-items: center; justify-content: center;
+      background: rgba(10, 132, 255, .18); outline: 2px dashed #0a84ff; outline-offset: -2px; cursor: move;
+      touch-action: none; user-select: none; color: #fff; font-weight: 600; text-shadow: 0 1px 3px #000; }
+    .mv-handle { position: absolute; width: 14px; height: 14px; box-sizing: border-box; background: #0a84ff; border: 2px solid #fff; border-radius: 3px; }
+    .mv-handle.nw { left: 0; top: 0; cursor: nwse-resize; }
+    .mv-handle.n { left: calc(50% - 7px); top: 0; cursor: ns-resize; }
+    .mv-handle.ne { right: 0; top: 0; cursor: nesw-resize; }
+    .mv-handle.e { right: 0; top: calc(50% - 7px); cursor: ew-resize; }
+    .mv-handle.se { right: 0; bottom: 0; cursor: nwse-resize; }
+    .mv-handle.s { left: calc(50% - 7px); bottom: 0; cursor: ns-resize; }
+    .mv-handle.sw { left: 0; bottom: 0; cursor: nesw-resize; }
+    .mv-handle.w { left: 0; top: calc(50% - 7px); cursor: ew-resize; }
+    #mv-edit-bar { position: fixed; top: 8px; left: 50%; transform: translateX(-50%); z-index: 2147483647; display: flex;
+      gap: 6px; align-items: center; padding: 8px 10px; color: #fff; background: rgba(0, 0, 0, .9); border-radius: 10px; }
+    #mv-edit-bar[hidden] { display: none; }
+    #mv-edit-bar span { opacity: .75; }
+    #mv-hud button, #mv-hud select, #mv-edit-bar button { font: inherit; color: #fff; background: #333; border: 1px solid #555; border-radius: 6px; padding: 4px 8px; cursor: pointer; }
     #mv-hud button.on { background: #0a84ff; border-color: #0a84ff; }
     #mv-hud .group { display: flex; gap: 2px; }
     #mv-hud .group select { width: 3.4em; }
@@ -45,7 +62,7 @@
 
   let slots = [];
   let order = []; // order[tile] = layout position the tile occupies
-  const state = { audio: 0, muted: false, layout: L.DEFAULT, focus: -1 };
+  const state = { audio: 0, muted: false, layout: L.DEFAULT, focus: -1, editing: false };
   const tiles = [];
   const watchedDocs = new WeakSet();
   let hud, edge, banner, hudTimer, hudPinned = false;
@@ -149,16 +166,138 @@
       // A focused tile covers the whole grid; the others keep their place
       // underneath, so they stay mounted and keep playing.
       const focused = i === state.focus;
-      const r = focused ? { x: 0, y: 0, width: 100, height: 100 } : rects[order[i]];
+      const r = state.editing ? editRects[i]
+        : focused ? { x: 0, y: 0, width: 100, height: 100 } : rects[order[i]];
       Object.assign(t.tile.style, {
         left: `${r.x}%`, top: `${r.y}%`, width: `${r.width}%`, height: `${r.height}%`,
-        zIndex: focused ? '1' : ''
+        // While editing, the tile being dragged sits on top of the others.
+        zIndex: state.editing ? (i === editTop ? '3' : '2') : focused ? '1' : ''
       });
     });
   }
 
+  // ---- custom layouts: drag and resize the windows, then save the result ----
+  const SNAP = 2.5; // % grid the edges snap to (they also snap to other windows' edges)
+  const MIN_SIZE = 10;
+  const HANDLES = ['nw', 'n', 'ne', 'e', 'se', 's', 'sw', 'w'];
+  let editRects = [];
+  let editTop = -1;
+  let editBar;
+
+  const clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, v));
+  const snapTo = (v, edges) => edges.reduce(
+    (best, e) => (Math.abs(e - v) < Math.abs(best - v) ? e : best), Math.round(v / SNAP) * SNAP);
+
+  // The rectangle `start` would become after dragging by (dx, dy) percent.
+  function draggedRect(i, start, dir, dx, dy) {
+    const others = editRects.filter((_, j) => j !== i);
+    const xs = others.flatMap(r => [r.x, r.x + r.width]);
+    const ys = others.flatMap(r => [r.y, r.y + r.height]);
+    let left = start.x, right = start.x + start.width, top = start.y, bottom = start.y + start.height;
+    if (dir === 'move') {
+      // Snap whichever of the two edges is closer to a guide.
+      const fit = (lo, size, guides, delta) => {
+        const a = snapTo(lo + delta, guides);
+        const b = snapTo(lo + size + delta, guides) - size;
+        return clamp(Math.abs(a - lo - delta) <= Math.abs(b - lo - delta) ? a : b, 0, 100 - size);
+      };
+      return {
+        x: fit(start.x, start.width, xs, dx), y: fit(start.y, start.height, ys, dy),
+        width: start.width, height: start.height
+      };
+    }
+    if (dir.includes('w')) left = clamp(snapTo(left + dx, xs), 0, right - MIN_SIZE);
+    if (dir.includes('e')) right = clamp(snapTo(right + dx, xs), left + MIN_SIZE, 100);
+    if (dir.includes('n')) top = clamp(snapTo(top + dy, ys), 0, bottom - MIN_SIZE);
+    if (dir.includes('s')) bottom = clamp(snapTo(bottom + dy, ys), top + MIN_SIZE, 100);
+    return { x: left, y: top, width: right - left, height: bottom - top };
+  }
+
+  function buildEditOverlay(i) {
+    const box = el('div', { className: 'mv-edit' }, `${i + 1}  ${tiles[i].label}`);
+    for (const dir of HANDLES) {
+      const handle = el('div', { className: `mv-handle ${dir}` });
+      handle.dataset.dir = dir;
+      box.append(handle);
+    }
+    box.addEventListener('pointerdown', e => {
+      e.preventDefault();
+      box.setPointerCapture(e.pointerId);
+      editTop = i;
+      const dir = e.target.dataset.dir || 'move';
+      const start = { ...editRects[i] };
+      const onMove = ev => {
+        editRects[i] = draggedRect(i, start, dir,
+          (ev.clientX - e.clientX) / innerWidth * 100, (ev.clientY - e.clientY) / innerHeight * 100);
+        applyLayout();
+      };
+      const onUp = () => {
+        for (const [name, fn] of [['pointermove', onMove], ['pointerup', onUp], ['pointercancel', onUp]]) {
+          box.removeEventListener(name, fn);
+        }
+      };
+      box.addEventListener('pointermove', onMove);
+      box.addEventListener('pointerup', onUp);
+      box.addEventListener('pointercancel', onUp);
+      applyLayout();
+    });
+    return box;
+  }
+
+  function resetEdit() {
+    const rects = L.rects(state.layout, tiles.length);
+    editRects = tiles.map((_, i) => ({ ...rects[order[i]] }));
+    applyLayout();
+  }
+
+  function startEdit() {
+    if (state.editing) return;
+    state.focus = -1;
+    state.editing = true;
+    editTop = -1;
+    document.body.classList.add('editing');
+    editBar.hidden = false;
+    tiles.forEach((t, i) => t.tile.append(buildEditOverlay(i)));
+    resetEdit();
+  }
+
+  function endEdit() {
+    state.editing = false;
+    document.body.classList.remove('editing');
+    editBar.hidden = true;
+    tiles.forEach(t => t.tile.querySelector('.mv-edit')?.remove());
+    applyLayout();
+    renderHud();
+  }
+
+  async function saveEdit() {
+    const current = state.layout.startsWith(L.PREFIX) ? state.layout.slice(L.PREFIX.length) : '';
+    const name = (prompt('Name this layout (an existing name is overwritten):', current) || '').trim().slice(0, 40);
+    if (!name) return;
+    // Saved by position (position 0 is the main window), not by tile.
+    const list = [];
+    tiles.forEach((_, i) => { list[order[i]] = editRects[i]; });
+    try {
+      await L.save(name, list);
+    } catch (err) {
+      console.error('[Game Multiview] Could not save the layout', err);
+      return;
+    }
+    endEdit();
+    setLayout(L.PREFIX + name);
+  }
+
+  async function deleteLayout() {
+    if (!state.layout.startsWith(L.PREFIX)) return;
+    const name = state.layout.slice(L.PREFIX.length);
+    if (!confirm(`Delete the layout "${name}"?`)) return;
+    await L.remove(name).catch(() => {});
+    setLayout(L.DEFAULT);
+  }
+
   // Temporarily show one game full-window; call again (or pass its index again) to go back.
   function toggleFocus(i = state.audio) {
+    if (state.editing) return;
     state.focus = state.focus === i ? -1 : i;
     if (state.focus >= 0) {
       selectAudio(i); // renders the bar
@@ -274,6 +413,12 @@
     }
     layout.addEventListener('change', () => setLayout(layout.value));
 
+    const edit = el('button', { textContent: '✎', title: 'Edit the layout: drag and resize the windows, then save it' });
+    edit.addEventListener('click', startEdit);
+    const del = el('button', { textContent: '🗑', title: 'Delete this saved layout' });
+    del.addEventListener('click', deleteLayout);
+    del.hidden = !state.layout.startsWith(L.PREFIX);
+
     const mute = el('button', { textContent: state.muted ? 'Restore audio' : 'Mute all' });
     mute.addEventListener('click', () => { state.muted = !state.muted; applyAudio(); renderHud(); });
     const full = el('button', { textContent: '⛶', title: 'Toggle fullscreen' });
@@ -281,7 +426,7 @@
     const close = el('button', { textContent: '✕', title: 'Close grid' });
     close.addEventListener('click', () => send({ type: 'close-grid' }).catch(() => {}));
 
-    hud.replaceChildren(...buttons, layout, mute, full, close);
+    hud.replaceChildren(...buttons, layout, edit, del, mute, full, close);
   }
 
   // ---- commands from the background (keyboard shortcuts, popup) ----
@@ -354,7 +499,20 @@
     hud.addEventListener('mouseenter', showHud);
     hud.addEventListener('mouseleave', scheduleHide);
     banner.addEventListener('click', () => applyAudio());
-    body.append(grid, edge, hud, banner);
+
+    const button = (text, title, onClick) => {
+      const b = el('button', { textContent: text, title });
+      b.addEventListener('click', onClick);
+      return b;
+    };
+    editBar = el('div', { id: 'mv-edit-bar', hidden: true },
+      el('span', { textContent: 'Drag to move, drag the handles to resize' }),
+      button('Save as…', 'Save this arrangement as a named layout', saveEdit),
+      button('Reset', 'Start again from the current layout', resetEdit),
+      button('Cancel', 'Leave without saving', endEdit));
+    body.append(grid, edge, hud, banner, editBar);
+
+    window.addEventListener('keydown', e => { if (e.key === 'Escape' && state.editing) endEdit(); });
 
     // Clicking into a frame moves focus to it; treat that as "play this one's audio".
     window.addEventListener('blur', () => setTimeout(() => {
@@ -393,7 +551,8 @@
 
     send({ type: 'grid-bootstrap' }).then(boot => {
       console.info('[Game Multiview] bootstrap ok', boot);
-      mount(boot);
+      // Saved layouts must be registered before mount checks the layout name.
+      return L.load().catch(() => {}).then(() => mount(boot));
     }).catch(error => {
       console.error('[Game Multiview] start-up failed', error);
       showError(error);

@@ -8,7 +8,7 @@ import { gameToSlot, describeGame } from './lib/slot.js';
 
 const GRID_KEY = 'grid';
 const HOST_URL = 'https://tv.youtube.com/live#mv-grid';
-const MAX_SLOTS = 4;
+const MAX_SLOTS = 8;
 
 // grid state: { tabId, windowId, slots: [{label, teams, geo}], layout }
 const getGrid = async () => (await chrome.storage.session.get(GRID_KEY))[GRID_KEY] || null;

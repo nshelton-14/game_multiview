@@ -35,7 +35,11 @@
     "audio-1": { "description": "Audio from game 1" },
     "audio-2": { "description": "Audio from game 2" },
     "audio-3": { "description": "Audio from game 3" },
-    "audio-4": { "description": "Audio from game 4" }
+    "audio-4": { "description": "Audio from game 4" },
+    "audio-5": { "description": "Audio from game 5" },
+    "audio-6": { "description": "Audio from game 6" },
+    "audio-7": { "description": "Audio from game 7" },
+    "audio-8": { "description": "Audio from game 8" }
   },
   "content_scripts": [
     {

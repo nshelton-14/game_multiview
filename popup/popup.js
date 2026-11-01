@@ -2,7 +2,7 @@ import { fetchGames } from '../lib/espn.js';
 import { gameToSlot } from '../lib/slot.js';
 
 const L = globalThis.MVLayout;
-const MAX_GAMES = 4;
+const MAX_GAMES = 8;
 
 const statusEl = document.getElementById('status');
 const listEl = document.getElementById('games');
@@ -143,6 +143,7 @@ layoutEl.addEventListener('change', async () => {
 });
 
 // init
+await L.load().catch(() => {});
 for (const [key, label] of Object.entries(L.LABELS)) {
   layoutEl.append(new Option(label, key));
 }
