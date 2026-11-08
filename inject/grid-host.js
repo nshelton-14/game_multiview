@@ -126,6 +126,9 @@
   }
 
   function enforceMedia() {
+    // Tell each frame's audio-guard (inject/audio-guard.js) which frame may have sound.
+    const open = !state.muted && canUnmute(state.audio);
+    document.documentElement.setAttribute('data-mv-audio', open ? String(state.audio) : '-1');
     tiles.forEach((t, i) => {
       const doc = frameDoc(t.frame);
       if (!doc) return;

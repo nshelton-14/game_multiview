@@ -51,6 +51,13 @@
     },
     {
       "matches": ["https://tv.youtube.com/*"],
+      "js": ["inject/audio-guard.js"],
+      "run_at": "document_start",
+      "all_frames": true,
+      "world": "MAIN"
+    },
+    {
+      "matches": ["https://tv.youtube.com/*"],
       "js": ["inject/geo-bridge.js"],
       "run_at": "document_start",
       "all_frames": true
