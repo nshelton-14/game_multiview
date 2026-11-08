@@ -35,6 +35,35 @@ async function workArea(fallback) {
   return fallback;
 }
 
+// The game picker is a standalone window rather than the toolbar popup, which
+// Chrome caps at roughly 800x600.
+const PICKER_KEY = 'picker';
+const PICKER_SIZE = { width: 1100, height: 760 };
+
+async function openPicker() {
+  const saved = (await chrome.storage.session.get(PICKER_KEY))[PICKER_KEY];
+  if (saved) {
+    try {
+      await chrome.windows.update(saved, { focused: true });
+      return;
+    } catch (err) {
+      // The window was closed; open a new one.
+    }
+  }
+  const a = await workArea(null);
+  const options = { url: chrome.runtime.getURL('popup/popup.html'), type: 'popup', focused: true, ...PICKER_SIZE };
+  if (a) {
+    options.width = Math.min(PICKER_SIZE.width, a.width);
+    options.height = Math.min(PICKER_SIZE.height, a.height);
+    options.left = Math.round(a.left + (a.width - options.width) / 2);
+    options.top = Math.round(a.top + (a.height - options.height) / 2);
+  }
+  const win = await chrome.windows.create(options);
+  await chrome.storage.session.set({ [PICKER_KEY]: win.id });
+}
+
+chrome.action.onClicked.addListener(() => openPicker().catch(err => console.error('[Game Multiview]', err)));
+
 async function closeGrid() {
   const grid = await getGrid();
   await setGrid(null);

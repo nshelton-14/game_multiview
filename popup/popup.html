@@ -2,27 +2,43 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Game Multiview</title>
   <link rel="stylesheet" href="popup.css">
 </head>
 <body>
-  <section id="session" hidden>
-    <h1>Grid is open</h1>
+  <header class="top">
+    <div class="brand"><span class="brand-bar"></span>GAME <b>MULTIVIEW</b></div>
+    <div class="top-controls">
+      <button id="refresh" class="ghost" title="Refresh the game list">⟳ Refresh</button>
+      <label class="layout">Layout
+        <select id="layout"></select>
+      </label>
+    </div>
+  </header>
+
+  <section id="session" class="session" hidden>
+    <div class="session-title"><span class="dot"></span>Grid is open</div>
     <ul id="session-list"></ul>
-    <div class="row">
-      <button id="mute-all">Mute all</button>
-      <button id="close-grid">Close grid</button>
+    <div class="session-actions">
+      <button id="mute-all" class="ghost">Mute all</button>
+      <button id="close-grid" class="danger">Close grid</button>
     </div>
   </section>
 
-  <h1>NFL games</h1>
-  <p id="status">Loading…</p>
-  <ul id="games"></ul>
-  <label class="layout">Layout
-    <select id="layout"></select>
-  </label>
-  <p class="hint">Pick up to 8. The first game you check is the main window.</p>
-  <button id="open" disabled>Open grid</button>
+  <main>
+    <p id="status">Loading…</p>
+    <div id="games"></div>
+  </main>
+
+  <footer class="dock">
+    <div class="dock-info">
+      <div class="dock-count"><b id="count">0</b> / <span id="max">8</span> selected</div>
+      <div id="picks" class="picks"></div>
+    </div>
+    <button id="open" class="primary" disabled>▶ OPEN GRID</button>
+  </footer>
+
   <script src="../lib/layout.js"></script>
   <script type="module" src="popup.js"></script>
 </body>

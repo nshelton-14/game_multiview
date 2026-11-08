@@ -3,7 +3,7 @@
   "name": "Game Multiview",
   "version": "0.2.0",
   "description": "Pick live NFL games and watch them together in one borderless YouTube TV grid, each frame with its own spoofed location.",
-  "action": { "default_popup": "popup/popup.html" },
+  "action": { "default_title": "Game Multiview" },
   "background": {
     "service_worker": "background.js",
     "scripts": ["background.js"],

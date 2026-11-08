@@ -27,17 +27,24 @@
     .mv-tile { position: absolute; box-sizing: border-box; padding: 1px; }
     .mv-tile iframe { display: block; width: 100%; height: 100%; border: 0; background: #000; }
     .mv-tile::after { content: ''; position: absolute; inset: 1px; pointer-events: none; box-shadow: inset 0 0 0 2px transparent; }
-    .mv-tile.audio::after { box-shadow: inset 0 0 0 2px #0a84ff; }
+    .mv-tile.audio::after { box-shadow: inset 0 0 0 2px #2f8cff, inset 0 0 18px rgba(47, 140, 255, .35); }
     #mv-edge { position: fixed; top: 0; left: 0; right: 0; height: 6px; z-index: 2147483646; }
-    #mv-hud { position: fixed; top: 0; left: 50%; transform: translate(-50%, -120%); transition: transform .15s;
-      z-index: 2147483647; display: flex; gap: 6px; align-items: center; padding: 8px 10px; color: #fff;
-      background: rgba(0, 0, 0, .85); border-radius: 0 0 10px 10px; max-width: 96vw; flex-wrap: wrap; justify-content: center; }
+    #mv-hud, #mv-edit-bar {
+      --panel: #101730; --panel-2: #172042; --line: #243059; --text: #eef2ff; --muted: #8d9ac4; --accent: #2f8cff; --live: #ff3b4e;
+      color: var(--text); font: 13px/1.2 system-ui, 'Segoe UI', sans-serif;
+      background: linear-gradient(180deg, rgba(23, 32, 66, .96), rgba(10, 15, 33, .96));
+      border: 1px solid var(--line); box-shadow: 0 12px 36px rgba(0, 0, 0, .6); backdrop-filter: blur(10px);
+    }
+    #mv-hud { position: fixed; top: 0; left: 50%; transform: translate(-50%, -125%); transition: transform .18s ease;
+      z-index: 2147483647; display: flex; gap: 10px; align-items: center; padding: 10px 14px; border-top: 0;
+      border-radius: 0 0 16px 16px; max-width: 96vw; flex-wrap: wrap; justify-content: center; }
     #mv-hud.show { transform: translate(-50%, 0); }
+    #mv-hud .sep { align-self: stretch; width: 1px; margin: 2px 2px; background: var(--line); }
     body.editing #mv-hud, body.editing #mv-edge { display: none; }
     .mv-edit { position: absolute; inset: 1px; z-index: 5; display: flex; align-items: center; justify-content: center;
-      background: rgba(10, 132, 255, .18); outline: 2px dashed #0a84ff; outline-offset: -2px; cursor: move;
-      touch-action: none; user-select: none; color: #fff; font-weight: 600; text-shadow: 0 1px 3px #000; }
-    .mv-handle { position: absolute; width: 14px; height: 14px; box-sizing: border-box; background: #0a84ff; border: 2px solid #fff; border-radius: 3px; }
+      background: rgba(47, 140, 255, .18); outline: 2px dashed #2f8cff; outline-offset: -2px; cursor: move;
+      touch-action: none; user-select: none; color: #fff; font: 700 15px system-ui, sans-serif; letter-spacing: .04em; text-shadow: 0 1px 4px #000; }
+    .mv-handle { position: absolute; width: 14px; height: 14px; box-sizing: border-box; background: #2f8cff; border: 2px solid #fff; border-radius: 4px; }
     .mv-handle.nw { left: 0; top: 0; cursor: nwse-resize; }
     .mv-handle.n { left: calc(50% - 7px); top: 0; cursor: ns-resize; }
     .mv-handle.ne { right: 0; top: 0; cursor: nesw-resize; }
@@ -46,16 +53,36 @@
     .mv-handle.s { left: calc(50% - 7px); bottom: 0; cursor: ns-resize; }
     .mv-handle.sw { left: 0; bottom: 0; cursor: nesw-resize; }
     .mv-handle.w { left: 0; top: calc(50% - 7px); cursor: ew-resize; }
-    #mv-edit-bar { position: fixed; top: 8px; left: 50%; transform: translateX(-50%); z-index: 2147483647; display: flex;
-      gap: 6px; align-items: center; padding: 8px 10px; color: #fff; background: rgba(0, 0, 0, .9); border-radius: 10px; }
+    #mv-edit-bar { position: fixed; top: 10px; left: 50%; transform: translateX(-50%); z-index: 2147483647; display: flex;
+      gap: 8px; align-items: center; padding: 10px 14px; border-radius: 14px; }
     #mv-edit-bar[hidden] { display: none; }
-    #mv-edit-bar span { opacity: .75; }
-    #mv-hud button, #mv-hud select, #mv-edit-bar button { font: inherit; color: #fff; background: #333; border: 1px solid #555; border-radius: 6px; padding: 4px 8px; cursor: pointer; }
-    #mv-hud button.on { background: #0a84ff; border-color: #0a84ff; }
-    #mv-hud .group { display: flex; gap: 2px; }
-    #mv-hud .group select { width: 3.4em; }
-    #mv-banner { position: fixed; bottom: 12px; left: 50%; transform: translateX(-50%); z-index: 2147483647;
-      padding: 8px 14px; border-radius: 8px; color: #fff; background: rgba(0, 0, 0, .85); cursor: pointer; }
+    #mv-edit-bar span { color: var(--muted); margin-right: 4px; }
+    #mv-hud button, #mv-hud select, #mv-edit-bar button {
+      font: inherit; color: var(--text); background: var(--panel); border: 1px solid var(--line); border-radius: 8px;
+      padding: 7px 11px; cursor: pointer; transition: background .15s, border-color .15s;
+    }
+    #mv-hud button:hover, #mv-hud select:hover, #mv-edit-bar button:hover { background: var(--panel-2); border-color: #3a4a85; }
+    #mv-hud button:focus-visible, #mv-hud select:focus-visible, #mv-edit-bar button:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+    #mv-hud option { background: var(--panel); color: var(--text); }
+    #mv-hud button.on { background: #12306a; border-color: var(--accent); }
+    #mv-hud button[hidden] { display: none; }
+    /* one pill per game: audio button, then small icon buttons */
+    #mv-hud .group { display: flex; align-items: center; gap: 3px; padding: 4px; border: 1px solid var(--line); border-radius: 12px; background: rgba(8, 12, 24, .55); }
+    #mv-hud .group.active { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent), 0 4px 16px rgba(47, 140, 255, .3); }
+    #mv-hud .group button, #mv-hud .group select { border-color: transparent; background: transparent; padding: 6px 8px; }
+    #mv-hud .group button:hover, #mv-hud .group select:hover { background: var(--panel-2); }
+    #mv-hud .group button.audio { display: inline-flex; align-items: center; gap: 8px; font-weight: 600; padding: 4px 10px 4px 4px; }
+    #mv-hud .group button.audio.on { background: #12306a; }
+    #mv-hud .n { display: grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; background: #2b3768; font-size: 12px; font-weight: 800; }
+    #mv-hud .group.active .n { background: var(--accent); }
+    #mv-hud .group select { width: 3.2em; }
+    #mv-hud .danger { color: #ffb4be; background: #3a1620; border-color: #6b2230; }
+    #mv-hud .danger:hover { background: #55202e; border-color: #8a2d40; }
+    #mv-edit-bar button.primary { border: 0; color: #fff; font-weight: 700; background: linear-gradient(135deg, #2f8cff, #6a5cff); }
+    #mv-edit-bar button.primary:hover { filter: brightness(1.1); }
+    #mv-banner { position: fixed; bottom: 16px; left: 50%; transform: translateX(-50%); z-index: 2147483647;
+      padding: 10px 18px; border-radius: 999px; color: #eef2ff; font: 600 13px system-ui, sans-serif; cursor: pointer;
+      background: rgba(16, 23, 48, .94); border: 1px solid #2f8cff; box-shadow: 0 8px 28px rgba(47, 140, 255, .35); }
     #mv-banner[hidden] { display: none; }
     .mv-error { color: #fff; padding: 32px; }
   `;
@@ -374,11 +401,11 @@
 
   function renderHud() {
     const buttons = tiles.map((t, i) => {
+      const active = !state.muted && i === state.audio;
       const audio = el('button', {
-        textContent: `${!state.muted && i === state.audio ? '🔊' : '🔇'} ${i + 1} ${t.label}`,
         title: 'Play audio from this game',
-        className: !state.muted && i === state.audio ? 'on' : ''
-      });
+        className: `audio${active ? ' on' : ''}`
+      }, el('span', { className: 'n', textContent: String(i + 1) }), `${t.label} ${active ? '🔊' : '🔇'}`);
       audio.addEventListener('click', () => selectAudio(i));
       const star = el('button', { textContent: '★', title: 'Make this the main window' });
       star.addEventListener('click', () => makeMain(i));
@@ -404,7 +431,7 @@
       }
       swap.addEventListener('change', () => { swapGame(i, swap.value); swap.blur(); });
       swap.addEventListener('blur', scheduleHide);
-      return el('div', { className: 'group' }, audio, zoom, star, refresh, swap);
+      return el('div', { className: `group${active ? ' active' : ''}` }, audio, zoom, star, refresh, swap);
     });
 
     const layout = el('select', { title: 'Layout' });
@@ -423,10 +450,10 @@
     mute.addEventListener('click', () => { state.muted = !state.muted; applyAudio(); renderHud(); });
     const full = el('button', { textContent: '⛶', title: 'Toggle fullscreen' });
     full.addEventListener('click', () => send({ type: 'grid-fullscreen' }).catch(() => {}));
-    const close = el('button', { textContent: '✕', title: 'Close grid' });
+    const close = el('button', { textContent: '✕', title: 'Close grid', className: 'danger' });
     close.addEventListener('click', () => send({ type: 'close-grid' }).catch(() => {}));
 
-    hud.replaceChildren(...buttons, layout, edit, del, mute, full, close);
+    hud.replaceChildren(...buttons, el('span', { className: 'sep' }), layout, edit, del, mute, full, close);
   }
 
   // ---- commands from the background (keyboard shortcuts, popup) ----
@@ -500,14 +527,14 @@
     hud.addEventListener('mouseleave', scheduleHide);
     banner.addEventListener('click', () => applyAudio());
 
-    const button = (text, title, onClick) => {
-      const b = el('button', { textContent: text, title });
+    const button = (text, title, onClick, className = '') => {
+      const b = el('button', { textContent: text, title, className });
       b.addEventListener('click', onClick);
       return b;
     };
     editBar = el('div', { id: 'mv-edit-bar', hidden: true },
       el('span', { textContent: 'Drag to move, drag the handles to resize' }),
-      button('Save as…', 'Save this arrangement as a named layout', saveEdit),
+      button('Save as…', 'Save this arrangement as a named layout', saveEdit, 'primary'),
       button('Reset', 'Start again from the current layout', resetEdit),
       button('Cancel', 'Leave without saving', endEdit));
     body.append(grid, edge, hud, banner, editBar);
