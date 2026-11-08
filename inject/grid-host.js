@@ -8,7 +8,7 @@
   const L = globalThis.MVLayout;
 
   const FRAME_URL = 'https://tv.youtube.com/live';
-  const HUD_IDLE_MS = 1500;
+  const HUD_IDLE_MS = 250;
 
   const send = async message => {
     const res = await chrome.runtime.sendMessage(message);
@@ -31,28 +31,43 @@
     #mv-edge { position: fixed; top: 0; left: 0; right: 0; height: 6px; z-index: 2147483646; }
     #mv-hud, #mv-edit-bar {
       --panel: #101730; --panel-2: #172042; --line: #243059; --text: #eef2ff; --muted: #8d9ac4; --accent: #2f8cff; --live: #ff3b4e;
-      color: var(--text); font: 13px/1.2 system-ui, 'Segoe UI', sans-serif;
+      color: var(--text); zoom: var(--mv-ui, 1); font: 13px/1.2 system-ui, 'Segoe UI', sans-serif;
       background: linear-gradient(180deg, rgba(23, 32, 66, .96), rgba(10, 15, 33, .96));
       border: 1px solid var(--line); box-shadow: 0 12px 36px rgba(0, 0, 0, .6); backdrop-filter: blur(10px);
     }
-    #mv-hud { position: fixed; top: 0; left: 50%; transform: translate(-50%, -125%); transition: transform .18s ease;
+    #mv-hud { position: fixed; top: 0; left: 50%; transform: translate(-50%, -125%); transition: transform .12s ease;
       z-index: 2147483647; display: flex; gap: 10px; align-items: center; padding: 10px 14px; border-top: 0;
-      border-radius: 0 0 16px 16px; max-width: 96vw; flex-wrap: wrap; justify-content: center; }
+      border-radius: 0 0 16px 16px; max-width: calc(96vw / var(--mv-ui, 1)); flex-wrap: wrap; justify-content: center; }
     #mv-hud.show { transform: translate(-50%, 0); }
     #mv-hud .sep { align-self: stretch; width: 1px; margin: 2px 2px; background: var(--line); }
     body.editing #mv-hud, body.editing #mv-edge { display: none; }
+    /* name tag: top-centre, clear of YouTube TV's channel logo (left) and fullscreen button (right) */
+    .mv-tag { zoom: var(--mv-ui, 1); position: absolute; top: 10px; left: 50%; z-index: 4; display: flex; align-items: center; gap: 8px; max-width: 90%;
+      padding: 5px 12px 5px 5px; border-radius: 999px; pointer-events: none; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+      color: #eef2ff; font: 600 14px system-ui, 'Segoe UI', sans-serif; background: rgba(10, 15, 33, .9); border: 1px solid #243059;
+      box-shadow: 0 6px 20px rgba(0, 0, 0, .5); opacity: 0; transform: translate(-50%, -4px); transition: opacity .12s, transform .12s; }
+    .mv-tile:hover .mv-tag { opacity: 1; transform: translate(-50%, 0); }
+    .mv-tag .n { display: grid; place-items: center; flex: none; width: 22px; height: 22px; border-radius: 50%; background: #2f8cff; font-size: 12px; font-weight: 800; }
+    body.editing .mv-tag, body.swapping .mv-tag { display: none; }
+    .mv-pick { position: absolute; inset: 1px; z-index: 5; display: flex; flex-direction: column; align-items: center; justify-content: center;
+      gap: 4px; padding: 8px; text-align: center; cursor: pointer; color: #fff; text-shadow: 0 1px 4px #000; user-select: none;
+      background: rgba(47, 140, 255, .28); outline: 3px solid #2f8cff; outline-offset: -3px; transition: background .12s; }
+    .mv-pick:hover { background: rgba(47, 140, 255, .5); }
+    .mv-pick b { font: 700 calc(clamp(13px, 1.6vw, 22px) * var(--mv-ui, 1)) system-ui, sans-serif; }
+    .mv-pick span { font: 500 calc(clamp(11px, 1vw, 14px) * var(--mv-ui, 1)) system-ui, sans-serif; opacity: .9; }
+    .mv-pick.source { background: rgba(10, 15, 33, .75); outline-style: dashed; }
     .mv-edit { position: absolute; inset: 1px; z-index: 5; display: flex; align-items: center; justify-content: center;
       background: rgba(47, 140, 255, .18); outline: 2px dashed #2f8cff; outline-offset: -2px; cursor: move;
-      touch-action: none; user-select: none; color: #fff; font: 700 15px system-ui, sans-serif; letter-spacing: .04em; text-shadow: 0 1px 4px #000; }
-    .mv-handle { position: absolute; width: 14px; height: 14px; box-sizing: border-box; background: #2f8cff; border: 2px solid #fff; border-radius: 4px; }
+      touch-action: none; user-select: none; color: #fff; font: 700 calc(15px * var(--mv-ui, 1)) system-ui, sans-serif; letter-spacing: .04em; text-shadow: 0 1px 4px #000; }
+    .mv-handle { position: absolute; width: calc(14px * var(--mv-ui, 1)); height: calc(14px * var(--mv-ui, 1)); box-sizing: border-box; background: #2f8cff; border: 2px solid #fff; border-radius: 4px; }
     .mv-handle.nw { left: 0; top: 0; cursor: nwse-resize; }
-    .mv-handle.n { left: calc(50% - 7px); top: 0; cursor: ns-resize; }
+    .mv-handle.n { left: calc(50% - 7px * var(--mv-ui, 1)); top: 0; cursor: ns-resize; }
     .mv-handle.ne { right: 0; top: 0; cursor: nesw-resize; }
-    .mv-handle.e { right: 0; top: calc(50% - 7px); cursor: ew-resize; }
+    .mv-handle.e { right: 0; top: calc(50% - 7px * var(--mv-ui, 1)); cursor: ew-resize; }
     .mv-handle.se { right: 0; bottom: 0; cursor: nwse-resize; }
-    .mv-handle.s { left: calc(50% - 7px); bottom: 0; cursor: ns-resize; }
+    .mv-handle.s { left: calc(50% - 7px * var(--mv-ui, 1)); bottom: 0; cursor: ns-resize; }
     .mv-handle.sw { left: 0; bottom: 0; cursor: nesw-resize; }
-    .mv-handle.w { left: 0; top: calc(50% - 7px); cursor: ew-resize; }
+    .mv-handle.w { left: 0; top: calc(50% - 7px * var(--mv-ui, 1)); cursor: ew-resize; }
     #mv-edit-bar { position: fixed; top: 10px; left: 50%; transform: translateX(-50%); z-index: 2147483647; display: flex;
       gap: 8px; align-items: center; padding: 10px 14px; border-radius: 14px; }
     #mv-edit-bar[hidden] { display: none; }
@@ -81,7 +96,7 @@
     #mv-hud .danger:hover { background: #55202e; border-color: #8a2d40; }
     #mv-edit-bar button.primary { border: 0; color: #fff; font-weight: 700; background: linear-gradient(135deg, #2f8cff, #6a5cff); }
     #mv-edit-bar button.primary:hover { filter: brightness(1.1); }
-    #mv-banner { position: fixed; bottom: 16px; left: 50%; transform: translateX(-50%); z-index: 2147483647;
+    #mv-banner { zoom: var(--mv-ui, 1); position: fixed; bottom: 16px; left: 50%; transform: translateX(-50%); z-index: 2147483647;
       padding: 10px 18px; border-radius: 999px; color: #eef2ff; font: 600 13px system-ui, sans-serif; cursor: pointer;
       background: rgba(16, 23, 48, .94); border: 1px solid #2f8cff; box-shadow: 0 8px 28px rgba(47, 140, 255, .35); }
     #mv-banner[hidden] { display: none; }
@@ -127,8 +142,19 @@
     });
   }
 
+  // The name tag shown while hovering a window: its number, the teams, and whether it has audio.
+  function renderTags() {
+    tiles.forEach((t, i) => {
+      const hasAudio = !state.muted && i === state.audio;
+      t.tag.replaceChildren(
+        el('span', { className: 'n', textContent: String(i + 1) }),
+        `${t.label}${hasAudio ? ' 🔊' : ''}`);
+    });
+  }
+
   function applyAudio() {
     tiles.forEach((t, i) => t.tile.classList.toggle('audio', !state.muted && i === state.audio));
+    renderTags();
     enforceMedia();
     banner.hidden = state.muted || canUnmute(state.audio);
   }
@@ -160,6 +186,23 @@
     }
   }
 
+  // ---- overlay size (the control bar, name tags and editor; the video itself is untouched) ----
+  // 'auto' grows the overlays on large screens: a 4K display at 100% browser scaling is 3840
+  // CSS px wide, so it scales by width / 1920 (rounded to quarters, 1x to 3x).
+  let uiScale = 'auto';
+
+  function applyScale() {
+    const auto = Math.round(Math.min(3, Math.max(1, innerWidth / 1920)) * 4) / 4;
+    const scale = uiScale === 'auto' ? auto : Number(uiScale) || 1;
+    document.documentElement.style.setProperty('--mv-ui', String(scale));
+  }
+
+  function setUiScale(value) {
+    uiScale = value;
+    applyScale();
+    renderHud();
+  }
+
   // ---- swap a window's game ----
   let gameList = []; // [{id, label, text}] from the background (ESPN scoreboard)
 
@@ -178,6 +221,7 @@
     try {
       const { label } = await send({ type: 'swap-game', index: i, id });
       tiles[i].label = label;
+      renderTags();
       renderHud();
       // Back to the guide; the reload fetches the new game's location.
       refreshFrame(i, { fromGuide: true });
@@ -280,6 +324,7 @@
 
   function startEdit() {
     if (state.editing) return;
+    endSwap();
     state.focus = -1;
     state.editing = true;
     editTop = -1;
@@ -326,6 +371,7 @@
   // Temporarily show one game full-window; call again (or pass its index again) to go back.
   function toggleFocus(i = state.audio) {
     if (state.editing) return;
+    endSwap();
     state.focus = state.focus === i ? -1 : i;
     if (state.focus >= 0) {
       selectAudio(i); // renders the bar
@@ -343,17 +389,59 @@
     send({ type: 'grid-layout', layout: name }).catch(() => {});
   }
 
-  function makeMain(i) {
-    const j = order.indexOf(0);
+  function swapOrder(i, j) {
     [order[i], order[j]] = [order[j], order[i]];
     applyLayout();
   }
 
+  function makeMain(i) {
+    swapOrder(i, order.indexOf(0));
+  }
+
+  // Swap places with any other window: pick one, then click the window to trade with.
+  // Only the windows' positions change; the frames keep playing without reloading.
+  let swapFrom = -1;
+
+  function endSwap() {
+    swapFrom = -1;
+    document.body.classList.remove('swapping');
+    tiles.forEach(t => t.tile.querySelector('.mv-pick')?.remove());
+  }
+
+  function startSwap(i) {
+    if (state.editing) return;
+    const same = swapFrom === i;
+    endSwap();
+    if (same) return; // pressing the button again cancels
+    swapFrom = i;
+    document.body.classList.add('swapping'); // the overlays already label every window
+    // Clear the control bar away so every window can be seen and clicked.
+    clearTimeout(hudTimer);
+    hud.classList.remove('show');
+    tiles.forEach((t, j) => {
+      const source = j === i;
+      const pick = el('div', { className: `mv-pick${source ? ' source' : ''}` },
+        el('b', { textContent: `${j + 1}  ${t.label}` }),
+        el('span', { textContent: source ? 'Moving this window: click another to swap with it' : 'Click to swap here' }));
+      pick.addEventListener('click', () => {
+        if (!source) swapOrder(i, j);
+        endSwap();
+      });
+      t.tile.append(pick);
+    });
+  }
+
   // ---- borderless player ----
+  // YouTube TV renders its control bar and its settings menu (speed, captions, audio track,
+  // quality) outside the player element. The fit rules hide everything outside the player, and
+  // a hidden container makes an opened menu inherit "hidden" and never appear. So the branches
+  // leading to these elements are marked data-mv-keep and left out of the hiding rule.
+  const KEEP_TARGETS = ['ytu-player-controls', '#id-settings-menu'];
   const FIT_CSS = `
     html[data-mv-fit="true"], html[data-mv-fit="true"] body { overflow: hidden !important; }
     html[data-mv-fit="true"] [data-mv-anc] { transform: none !important; filter: none !important; perspective: none !important; contain: none !important; position: static !important; overflow: visible !important; opacity: 1 !important; clip-path: none !important; }
-    html[data-mv-fit="true"] [data-mv-anc] > :not([data-mv-anc]):not([data-mv-root]):not(style):not(link):not(script) { visibility: hidden !important; }
+    html[data-mv-fit="true"] [data-mv-anc] > :not([data-mv-anc]):not([data-mv-keep]):not([data-mv-root]):not(style):not(link):not(script) { visibility: hidden !important; }
+    html[data-mv-fit="true"] #id-settings-menu { z-index: 2147483647 !important; }
     html[data-mv-fit="true"] [data-mv-root] { position: fixed !important; inset: 0 !important; width: 100vw !important; height: 100vh !important; min-width: 0 !important; min-height: 0 !important; max-width: none !important; max-height: none !important; margin: 0 !important; border: 0 !important; border-radius: 0 !important; overflow: hidden !important; z-index: 2147483646 !important; background: #000 !important; visibility: visible !important; }
     html[data-mv-fit="true"] [data-mv-root] video, html[data-mv-fit="true"] video[data-mv-root] { width: 100% !important; height: 100% !important; left: 0 !important; top: 0 !important; object-fit: contain !important; }
   `;
@@ -365,6 +453,13 @@
     const watching = doc.location.pathname.startsWith('/watch');
     doc.documentElement.dataset.mvFit = String(watching);
     if (!watching) return;
+    for (const selector of KEEP_TARGETS) {
+      const target = doc.querySelector(selector);
+      if (!target || target.hasAttribute('data-mv-keep')) continue;
+      for (let node = target; node && node !== doc.documentElement; node = node.parentElement) {
+        node.setAttribute('data-mv-keep', '');
+      }
+    }
     // The /watch page keeps the guide mounted behind the player, and the guide
     // has dozens of thumbnail <video>s, so never pick "the largest video":
     // use the real player (#movie_player, which holds video.html5-main-video).
@@ -410,6 +505,12 @@
       audio.addEventListener('click', () => selectAudio(i));
       const star = el('button', { textContent: '★', title: 'Make this the main window' });
       star.addEventListener('click', () => makeMain(i));
+      const swapBtn = el('button', {
+        textContent: '⇆',
+        title: 'Swap places with another window',
+        className: swapFrom === i ? 'on' : ''
+      });
+      swapBtn.addEventListener('click', () => startSwap(i));
       const focused = state.focus === i;
       const zoom = el('button', {
         textContent: focused ? '⤡' : '⤢',
@@ -424,15 +525,15 @@
       refresh.addEventListener('click', e => refreshFrame(i, { fromGuide: e.shiftKey }));
 
       // Replace this window's game with another from today's list.
-      const swap = el('select', { title: 'Replace this game' });
-      swap.append(new Option('⇄', ''));
+      const swap = el('select', { title: 'Replace this game: pick another from the list' });
+      swap.append(new Option('☰', ''));
       const inUse = new Set(tiles.map(x => x.label));
       for (const game of gameList.filter(g => !inUse.has(g.label))) {
         swap.append(new Option(game.text, game.id));
       }
       swap.addEventListener('change', () => { swapGame(i, swap.value); swap.blur(); });
       swap.addEventListener('blur', scheduleHide);
-      return el('div', { className: `group${active ? ' active' : ''}` }, audio, zoom, star, refresh, swap);
+      return el('div', { className: `group${active ? ' active' : ''}` }, audio, zoom, star, swapBtn, refresh, swap);
     });
 
     const layout = el('select', { title: 'Layout' });
@@ -447,6 +548,15 @@
     del.addEventListener('click', deleteLayout);
     del.hidden = !state.layout.startsWith(L.PREFIX);
 
+    const size = el('select', { title: 'Overlay size (control bar, name tags, editor)' });
+    for (const [value, label] of L.UI_SIZES) size.append(new Option(`Aa ${label}`, value, false, value === uiScale));
+    size.addEventListener('change', () => {
+      setUiScale(size.value);
+      chrome.storage.local.set({ uiScale: size.value }).catch(() => {});
+      size.blur();
+    });
+    size.addEventListener('blur', scheduleHide);
+
     const mute = el('button', { textContent: state.muted ? 'Restore audio' : 'Mute all' });
     mute.addEventListener('click', () => { state.muted = !state.muted; applyAudio(); renderHud(); });
     const full = el('button', { textContent: '⛶', title: 'Toggle fullscreen' });
@@ -454,7 +564,7 @@
     const close = el('button', { textContent: '✕', title: 'Close grid', className: 'danger' });
     close.addEventListener('click', () => send({ type: 'close-grid' }).catch(() => {}));
 
-    hud.replaceChildren(...buttons, el('span', { className: 'sep' }), layout, edit, del, mute, full, close);
+    hud.replaceChildren(...buttons, el('span', { className: 'sep' }), layout, size, edit, del, mute, full, close);
   }
 
   // ---- commands from the background (keyboard shortcuts, popup) ----
@@ -515,7 +625,9 @@
       });
       const tile = el('div', { className: 'mv-tile' }, frame);
       frame.addEventListener('load', () => { enforceMedia(); fitFrame(frame); });
-      tiles.push({ tile, frame, label: slot.label });
+      const tag = el('div', { className: 'mv-tag' });
+      tile.append(tag);
+      tiles.push({ tile, frame, label: slot.label, tag });
       grid.append(tile);
     });
 
@@ -540,7 +652,11 @@
       button('Cancel', 'Leave without saving', endEdit));
     body.append(grid, edge, hud, banner, editBar);
 
-    window.addEventListener('keydown', e => { if (e.key === 'Escape' && state.editing) endEdit(); });
+    window.addEventListener('keydown', e => {
+      if (e.key !== 'Escape') return;
+      if (state.editing) endEdit();
+      else if (swapFrom >= 0) endSwap();
+    });
 
     // Clicking into a frame moves focus to it; treat that as "play this one's audio".
     window.addEventListener('blur', () => setTimeout(() => {
@@ -563,6 +679,16 @@
     send({ type: 'grid-ready' }).catch(() => {});
     loadGames();
     setInterval(loadGames, 60000);
+
+    // Overlay size is a saved setting shared with the picker.
+    applyScale();
+    window.addEventListener('resize', applyScale); // 'auto' follows the window width
+    chrome.storage.local.get({ uiScale: 'auto' }).then(v => setUiScale(String(v.uiScale))).catch(() => {});
+    chrome.storage.onChanged.addListener((changes, area) => {
+      if (area === 'local' && changes.uiScale && String(changes.uiScale.newValue) !== uiScale) {
+        setUiScale(String(changes.uiScale.newValue));
+      }
+    });
   }
 
   // Visible progress so a stuck start-up is distinguishable from the script not running.

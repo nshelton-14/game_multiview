@@ -12,9 +12,10 @@ Disable the standalone Spoof Geolocation extension so it doesn't interfere.
 
 ## Using it
 - Click the toolbar icon to open the picker, then check up to 8 games (the first one checked is the main window), pick a layout, click **Open grid**.
-- Move the mouse to the very top edge of the grid to reveal the control bar: per-game audio buttons, ★ to make a game the main window, layout picker, mute all, fullscreen, close.
+- Move the mouse to the very top edge of the grid to reveal the control bar: per-game audio buttons, ★ to make a game the main window, ⇆ to swap places with any other window (click it, then click the window to trade with; **Esc** cancels), layout picker, mute all, fullscreen, close.
 - Audio: one game plays at a time. Click a game to hear it, use the control bar or the picker window, or use shortcuts: **Alt+Shift+A** cycle, **Alt+Shift+X** mute all, **Alt+Shift+M** pin/unpin the control bar. Extra unbound shortcuts (audio 1–8, previous) can be set at `chrome://extensions/shortcuts`.
 - Custom layouts: click **✎** in the control bar, drag the windows and their handles into place (edges snap to a grid and to each other), then **Save as…**. Saved layouts appear in the layout pickers (in the control bar and the popup) marked with ★; select one and click **🗑** to delete it. **Esc** leaves edit mode without saving.
+- Overlay size: the control bar, name tags and layout editor scale with the **Overlay size** setting (picker header, or the **Aa** drop-down in the control bar). **Auto** scales up on large screens such as a 4K TV; pick 150% to 300% to go bigger. It does not resize the video. For the picker window itself, use the browser zoom (Ctrl and +).
 - Chrome blocks sound until you've clicked in the page once; a "Click a game to enable sound" banner shows until then.
 
 ## Unverified / next steps

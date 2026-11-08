@@ -162,3 +162,4 @@ main { flex: 1; overflow-y: auto; padding: 8px 28px 24px; }
   .card, .primary { transition: none; }
   .live-badge::before { animation: none; }
 }
+

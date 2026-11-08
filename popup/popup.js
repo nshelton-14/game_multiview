@@ -207,6 +207,13 @@ layoutEl.addEventListener('change', async () => {
   await send({ type: 'command', command: 'set-layout', layout: layoutEl.value }).catch(() => {});
 });
 
+
+// Overlay size inside the grid; an open grid picks the change up straight away.
+const sizeEl = document.getElementById('ui-size');
+for (const [value, label] of L.UI_SIZES) sizeEl.append(new Option(label, value));
+sizeEl.addEventListener('change', () => chrome.storage.local.set({ uiScale: sizeEl.value }));
+chrome.storage.local.get({ uiScale: 'auto' }).then(v => { sizeEl.value = String(v.uiScale); });
+
 // ---- init ----
 document.getElementById('max').textContent = String(MAX_GAMES);
 await L.load().catch(() => {});
