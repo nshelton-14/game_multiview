@@ -75,7 +75,8 @@
     #mv-hud .group button.audio.on { background: #12306a; }
     #mv-hud .n { display: grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; background: #2b3768; font-size: 12px; font-weight: 800; }
     #mv-hud .group.active .n { background: var(--accent); }
-    #mv-hud .group select { width: 3.2em; }
+    /* No native arrow: it was clipping the swap icon. The icon alone says "pick a game". */
+    #mv-hud .group select { appearance: none; -webkit-appearance: none; width: 34px; padding: 6px 0; text-align: center; text-align-last: center; }
     #mv-hud .danger { color: #ffb4be; background: #3a1620; border-color: #6b2230; }
     #mv-hud .danger:hover { background: #55202e; border-color: #8a2d40; }
     #mv-edit-bar button.primary { border: 0; color: #fff; font-weight: 700; background: linear-gradient(135deg, #2f8cff, #6a5cff); }
