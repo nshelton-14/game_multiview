@@ -42,7 +42,7 @@
     #mv-hud .sep { align-self: stretch; width: 1px; margin: 2px 2px; background: var(--line); }
     body.editing #mv-hud, body.editing #mv-edge { display: none; }
     /* name tag: top-centre, clear of YouTube TV's channel logo (left) and fullscreen button (right) */
-    .mv-tag { zoom: var(--mv-ui, 1); position: absolute; top: 10px; left: 50%; z-index: 4; display: flex; align-items: center; gap: 8px; max-width: 90%;
+    .mv-tag { zoom: var(--mv-ui, 1); position: absolute; top: 10px; left: 28%; z-index: 4; display: flex; align-items: center; gap: 8px; max-width: 50%;
       padding: 5px 12px 5px 5px; border-radius: 999px; pointer-events: none; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
       color: #eef2ff; font: 600 14px system-ui, 'Segoe UI', sans-serif; background: rgba(10, 15, 33, .9); border: 1px solid #243059;
       box-shadow: 0 6px 20px rgba(0, 0, 0, .5); opacity: 0; transform: translate(-50%, -4px); transition: opacity .12s, transform .12s; }
